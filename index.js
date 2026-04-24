@@ -95,4 +95,12 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, () => console.log('Hubtel proxy running on port ' + PORT));
+server.listen(PORT, () => {
+  console.log('Hubtel proxy running on port ' + PORT);
+  
+  // Keep alive — ping self every 10 minutes to prevent Render from sleeping
+  setInterval(() => {
+    https.get('https://hubtel-proxy-0tr5.onrender.com/', () => {}).on('error', () => {});
+    console.log('Keep-alive ping sent');
+  }, 10 * 60 * 1000); // every 10 minutes
+});
