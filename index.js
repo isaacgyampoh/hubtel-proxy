@@ -16,6 +16,25 @@ const server = http.createServer((req, res) => {
 
   if (req.method === 'OPTIONS') { res.writeHead(200); res.end(); return; }
 
+  // GET /test = send POST to Hubtel webhook for IP verification
+  if (req.method === 'GET' && req.url === '/test') {
+    const postData = JSON.stringify({ source: 'hubtel-proxy-render', test: true, timestamp: new Date().toISOString() });
+    const options = {
+      hostname: 'webhook.site',
+      path: '/d5d5f765-1ab8-4bb4-968a-cb61141e54bc',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(postData) },
+    };
+    const webhookReq = https.request(options, (webhookRes) => {
+      res.writeHead(200);
+      res.end(JSON.stringify({ status: 'POST sent to Hubtel webhook', webhookResponse: webhookRes.statusCode }));
+    });
+    webhookReq.on('error', (e) => { res.writeHead(500); res.end(JSON.stringify({ error: e.message })); });
+    webhookReq.write(postData);
+    webhookReq.end();
+    return;
+  }
+
   // GET = show IP
   if (req.method === 'GET') {
     https.get('https://api.ipify.org', (r) => {
